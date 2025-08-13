@@ -1,5 +1,6 @@
 import pygame
 import math
+import copy
 from functions import ranDirection
 from utilities import chance, clamp
 from screen import width, height
@@ -7,14 +8,15 @@ from screen import width, height
 milliwatts = 1.35
 
 class Food:
-    def __init__(self, x, y):
+    def __init__(self, x, y, energy):
         self.rect = pygame.Rect(x,y,1,1)
+        self.energy = energy
     
     def draw(self, surface) :
         pygame.draw.rect(surface, (3, 252, 82), self.rect)
 
 class Cell:
-    def __init__(self , x , y, moveRate, growthRate, absorption, mutationRate, maxEnergy):
+    def __init__(self , x , y, moveRate, growthRate, absorption, mutationRate, maxEnergy, motabolism, massRate, cells, foods):
         self.rect = pygame.Rect(x,y,1,1)
         self.energy = maxEnergy
         self.extraMass = 0.0
@@ -23,6 +25,10 @@ class Cell:
         self.growthRate = growthRate
         self.absorption = absorption
         self.mutationRate = mutationRate
+        self.motabolism = motabolism
+        self.massRate = massRate
+        self.cells = cells
+        self.foods = foods
 
     def draw(self, surface):
         pygame.draw.rect(surface,(255,255,255),self.rect)
@@ -32,6 +38,9 @@ class Cell:
             self.energy += self.absorption * milliwatts
         if chance(self.moveRate):
             self.move(ranDirection())
+        self.eat()
+        self.massGain(self.massRate)
+        self.deathCheck()
 
     def energyGain(self, amount):
         if self.energy + amount <= self.maxEnergy :
@@ -42,10 +51,36 @@ class Cell:
     def energyUse(self, amount):
         self.energy -= amount
 
+    def massGain(self, amount):
+        self.extraMass += amount
+        if self.extraMass >= 1:
+            self.extraMass -= 1
+            newCell = copy.copy(self)
+            self.cells.append(newCell)
+            newCell.move(ranDirection())
+
     def move(self, vector2):
         self.energyUse(1)
         self.rect.x += vector2.x
         self.rect.x = clamp(self.rect.x,0,width)
         self.rect.y += vector2.y
         self.rect.y = clamp(self.rect.y,0,height)
+
+    def eat(self):
+        foodInd = self.rect.collidelist(self.foods)
+        if foodInd != -1:
+            food = self.foods[foodInd]
+            self.foods.remove(food)
+            self.energyGain(food.energy * self.motabolism)
+            del food
+            self.massGain(0.4)
+
+    def locationCheck(self):
+        cellInd = self.rect.collidelist(self.cells)
+    
+    def deathCheck(self):
+        if self.energy <= 0:
+            self.foods.append(Food(self.rect.x, self.rect.y, self.maxEnergy * 0.1))
+            self.cells.remove(self)
+            del self
 

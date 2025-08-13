@@ -16,36 +16,23 @@ def reset() :
 
 foods = []
 
-for int in range(1500):
-    foods.append(Food(random.randint(0, width),random.randint(0, height)))
+for int in range(2500):
+    foods.append(Food(random.randint(0, width),random.randint(0, height), 50))
 
 cells = []
 
 for int in range(200):
-    cells.append(Cell(random.randint(0, width),random.randint(0, height), 0.2,0.1,0.1,0.1,20))
+    cells.append(Cell(random.randint(0, width),random.randint(0, height), 0.05,0.15,0.1,0.1,20,0.1,0.01,cells,foods))
 
 def main_loop():
     for cell in list(cells):
-        cell.cycle()
-        foodInd = cell.rect.collidelist(foods)
-        if foodInd != -1:
-            foods.remove(foods[foodInd])
-            del foods[foodInd]
-            cell.energyGain(6)
-            cell.extraMass += 0.4
-            if cell.extraMass >= 1:
-                cell.extraMass = 0.0
-                newCell = copy.copy(cell)
-                newCell.move(ranDirection())
-            
+        cell.cycle()       
         cell.draw(base_surface)
-        if cell.energy <= 0:
-            foods.append(Food(cell.rect.x,cell.rect.y))
-            cells.remove(cell)
-            del cell
-    
+        
     for food in foods:
         food.draw(base_surface)
+    
+    print(len(cells))
 
 
 running = True
@@ -63,6 +50,6 @@ while running:
     scaled_surface = pygame.transform.scale(base_surface, (screen_width, screen_height))
     screen.blit(scaled_surface, (0, 0))
     pygame.display.flip()
-    pygame.time.delay(10)
+    pygame.time.delay(1)
 
 pygame.quit()
