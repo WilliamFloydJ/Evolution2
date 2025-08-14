@@ -30,7 +30,7 @@ def main_loop():
     for cell in list(cells):
         cell.cycle()            
 
-base_surface.fill((255,255,255))
+base_surface.fill((0,0,0))
 pygame.display.flip()
 
 running = True

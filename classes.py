@@ -16,6 +16,10 @@ class Food:
         pygame.draw.rect(surface, (3, 252, 82), self.rect)
         pygame.display.update(self.rect)
 
+    def unDraw(self, surface) :
+        surface.fill((0,0,0),self.rect)
+        pygame.display.update(self.rect)
+
 class Cell:
     def __init__(self , x , y, moveRate, growthRate, absorption, mutationRate, maxEnergy, motabolism, massRate, cells, foods, surface):
         self.rect = pygame.Rect(x,y,1,1)
@@ -37,8 +41,8 @@ class Cell:
         pygame.display.update(self.rect)
         
     def unDraw(self, surface, rect):
-        pygame.draw.rect(surface,(0,0,0),self.rect)
-        pygame.display.update(self.rect)
+        surface.fill((0,0,0),rect)
+        pygame.display.update(rect)
 
     def cycle(self):
         if self.energy < self.maxEnergy :
@@ -73,6 +77,7 @@ class Cell:
         self.rect.x = clamp(self.rect.x,0,width)
         self.rect.y += vector2.y
         self.rect.y = clamp(self.rect.y,0,height)
+        self.unDraw(self.surface, self.rect)
         self.draw(self.surface)
 
 
@@ -81,8 +86,7 @@ class Cell:
         if foodInd != -1:
             food = self.foods[foodInd]
             self.foods.remove(food)
-            self.surface.fill((0,0,0),food.rect)
-            pygame.display.update(food.rect)
+            food.unDraw(self.surface)
             self.energyGain(food.energy * self.motabolism)
             del food
             self.massGain(0.4)
