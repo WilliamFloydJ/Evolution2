@@ -8,15 +8,16 @@ from screen import width, height
 milliwatts = 1.35
 
 class Food:
-    def __init__(self, x, y, energy):
+    def __init__(self, x, y, energy, surface):
         self.rect = pygame.Rect(x,y,1,1)
         self.energy = energy
     
     def draw(self, surface) :
         pygame.draw.rect(surface, (3, 252, 82), self.rect)
+        pygame.display.update(self.rect)
 
 class Cell:
-    def __init__(self , x , y, moveRate, growthRate, absorption, mutationRate, maxEnergy, motabolism, massRate, cells, foods):
+    def __init__(self , x , y, moveRate, growthRate, absorption, mutationRate, maxEnergy, motabolism, massRate, cells, foods, surface):
         self.rect = pygame.Rect(x,y,1,1)
         self.energy = maxEnergy
         self.extraMass = 0.0
@@ -29,9 +30,15 @@ class Cell:
         self.massRate = massRate
         self.cells = cells
         self.foods = foods
+        self.surface = surface
 
     def draw(self, surface):
         pygame.draw.rect(surface,(255,255,255),self.rect)
+        pygame.display.update(self.rect)
+        
+    def unDraw(self, surface, rect):
+        pygame.draw.rect(surface,(0,0,0),self.rect)
+        pygame.display.update(self.rect)
 
     def cycle(self):
         if self.energy < self.maxEnergy :
@@ -60,27 +67,39 @@ class Cell:
             newCell.move(ranDirection())
 
     def move(self, vector2):
+        self.surface.fill((255,255,255),self.rect)
         self.energyUse(1)
         self.rect.x += vector2.x
         self.rect.x = clamp(self.rect.x,0,width)
         self.rect.y += vector2.y
         self.rect.y = clamp(self.rect.y,0,height)
+        self.draw(self.surface)
+
 
     def eat(self):
         foodInd = self.rect.collidelist(self.foods)
         if foodInd != -1:
             food = self.foods[foodInd]
             self.foods.remove(food)
+            self.surface.fill((0,0,0),food.rect)
+            pygame.display.update(food.rect)
             self.energyGain(food.energy * self.motabolism)
             del food
             self.massGain(0.4)
 
     def locationCheck(self):
-        cellInd = self.rect.collidelist(self.cells)
+        cellList = self.cells.copy()
+        if self in cellList:
+            cellList.remove(self)
+        cellInd = self.rect.collidelist(cellList)
+        if cellInd != -1:
+            self.move(ranDirection())
     
     def deathCheck(self):
         if self.energy <= 0:
-            self.foods.append(Food(self.rect.x, self.rect.y, self.maxEnergy * 0.1))
+            self.foods.append(Food(self.rect.x, self.rect.y, self.maxEnergy * 0.1, self.surface))
             self.cells.remove(self)
+            self.surface.fill((255,255,255),self.rect)
+            pygame.display.update(self.rect)
             del self
 

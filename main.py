@@ -17,23 +17,21 @@ def reset() :
 foods = []
 
 for int in range(2500):
-    foods.append(Food(random.randint(0, width),random.randint(0, height), 50))
+    food = Food(random.randint(0, width),random.randint(0, height), 50, base_surface)
+    food.draw(base_surface)
+    foods.append(food)
 
 cells = []
 
 for int in range(200):
-    cells.append(Cell(random.randint(0, width),random.randint(0, height), 0.05,0.15,0.1,0.1,20,0.1,0.01,cells,foods))
+    cells.append(Cell(random.randint(0, width),random.randint(0, height), 0.05,0.15,0.1,0.1,20,0.1,0.01,cells,foods,base_surface))
 
 def main_loop():
     for cell in list(cells):
-        cell.cycle()       
-        cell.draw(base_surface)
-        
-    for food in foods:
-        food.draw(base_surface)
-    
-    print(len(cells))
+        cell.cycle()            
 
+base_surface.fill((255,255,255))
+pygame.display.flip()
 
 running = True
 while running:
@@ -43,13 +41,11 @@ while running:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_r:
                 reset()
-    base_surface.fill((0,0,0))
 
     main_loop()
 
     scaled_surface = pygame.transform.scale(base_surface, (screen_width, screen_height))
     screen.blit(scaled_surface, (0, 0))
-    pygame.display.flip()
-    pygame.time.delay(1)
+    pygame.time.delay(100)
 
 pygame.quit()
