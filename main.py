@@ -26,14 +26,19 @@ for int in range(500):
 cells = []
 
 for int in range(1):
-    cell = Cell(random.randint(0, width),random.randint(0, height), 0.05,0.15,0.1,0.1,20,0.1,0.1,cells,foods,screen, background)
+    cell = Cell(random.randint(0, width),random.randint(0, height), 0.05,0.15,0.1,0.1, 0.01, (255,255,255),20,0.1,0.1,cells,foods,screen, background)
     cells.append(cell)
     cell.draw(screen)
 
 
 def main_loop():
+    all_dirty = []
     for cell in list(cells):
-        cell.cycle()
+        dirty = cell.cycle()
+        if dirty:
+            all_dirty += dirty
+    pygame.display.update(all_dirty)
+
 
 clock = pygame.time.Clock()  
 

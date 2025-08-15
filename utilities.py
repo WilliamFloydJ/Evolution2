@@ -16,3 +16,10 @@ def chance(percent):
 
 def clamp(value, min_value, max_value):
     return max(min_value, min(value, max_value))
+
+def rangeDec(amount):
+    range_arr = []
+    inctament = 1/amount
+    for i in range(amount):
+         range_arr.append(round(i*inctament,2))
+    return range_arr
