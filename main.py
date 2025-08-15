@@ -1,40 +1,45 @@
 import pygame
 import copy
 import random
-from screen import width, height, screen_width, screen_height
+from screen import width, height
 from classes import Cell, Food
 from functions import ranDirection
 
 pygame.init()
 pygame.display.set_caption("Evolution")
-base_surface = pygame.Surface((width, height))
-screen = pygame.display.set_mode((screen_width, screen_height))
-screen_scale = screen_width / width
+screen = pygame.display.set_mode((width, height))
+background = pygame.Surface(screen.get_size())
+background.fill((0,0,0))
+screen.blit(background,(0,0))
+
 
 def reset() :
     pass
 
 foods = []
 
-for int in range(2500):
-    food = Food(random.randint(0, width),random.randint(0, height), 50, base_surface)
-    food.draw(base_surface)
+for int in range(500):
+    food = Food(random.randint(0, width),random.randint(0, height), 50, background)
+    food.draw(screen)
     foods.append(food)
 
 cells = []
 
-for int in range(200):
-    cells.append(Cell(random.randint(0, width),random.randint(0, height), 0.05,0.15,0.1,0.1,20,0.1,0.01,cells,foods,base_surface))
+for int in range(1):
+    cell = Cell(random.randint(0, width),random.randint(0, height), 0.05,0.15,0.1,0.1,20,0.1,0.1,cells,foods,screen, background)
+    cells.append(cell)
+    cell.draw(screen)
+
 
 def main_loop():
     for cell in list(cells):
-        cell.cycle()            
+        cell.cycle()
 
-base_surface.fill((0,0,0))
-pygame.display.flip()
+clock = pygame.time.Clock()  
 
 running = True
 while running:
+    clock.tick(5)
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
@@ -43,9 +48,6 @@ while running:
                 reset()
 
     main_loop()
-
-    scaled_surface = pygame.transform.scale(base_surface, (screen_width, screen_height))
-    screen.blit(scaled_surface, (0, 0))
-    pygame.time.delay(100)
+    
 
 pygame.quit()
