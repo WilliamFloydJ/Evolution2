@@ -7,11 +7,14 @@ from utilities import chance, clamp, rangeDec
 from screen import width, height
 
 milliwatts = 1.35
-pixel_size = 5
+
+class DNA:
+    def __init__(self):
+        pass
 
 class Food:
-    def __init__(self, x, y, energy, mass, background):
-        self.rect = pygame.Rect(x,y,pixel_size,pixel_size)
+    def __init__(self, x, y, energy, mass, size, background):
+        self.rect = pygame.Rect(x,y,size,size)
         self.energy = energy
         self.mass = mass
         self.background = background
@@ -30,8 +33,8 @@ class Food:
         pygame.display.update(self.rect)
 
 class Cell:
-    def __init__(self , x , y, moveRate, growthRate, absorption, mutationRate, mutationAmount, color, maxEnergy, motabolism, massRate, cells, foods, surface, background):
-        self.rect = pygame.Rect(x,y,pixel_size,pixel_size)
+    def __init__(self , x , y, moveRate, growthRate, absorption, mutationRate, mutationAmount, color, maxEnergy, motabolism, massRate, size, cells, foods, surface, background, canEat = False, sexual = False, multi_cells = []):
+        self.rect = pygame.Rect(x,y,size,size)
         self.energy = maxEnergy
         self.extraMass = 0.0
         self.color = color
@@ -43,6 +46,10 @@ class Cell:
         self.mutationRate = mutationRate
         self.motabolism = motabolism
         self.massRate = massRate
+        self.size = size
+        self.canEat = canEat
+        self.sexual = sexual
+        self.multi_cells = multi_cells
         self.cells = cells
         self.foods = foods
         self.surface = surface
@@ -51,7 +58,7 @@ class Cell:
         self.dirty = []
 
     def __str__(self):
-        return f"energy = {self.energy}; color = {self.color}; moveRate = {self.moveRate}; growthRate = {self.growthRate}; absorption = {self.absorption}; mutationRate = {self.mutationRate}; mutationAmount = {self.mutationAmount}; maxEnergy = {self.maxEnergy}; motabolism = {self.motabolism}; massRate = {self.massRate}; extraMass = {self.extraMass}"
+        return f"energy = {self.energy}; color = {self.color}; moveRate = {self.moveRate}; growthRate = {self.growthRate}; absorption = {self.absorption}; mutationRate = {self.mutationRate}; mutationAmount = {self.mutationAmount}; maxEnergy = {self.maxEnergy}; motabolism = {self.motabolism}; massRate = {self.massRate}; extraMass = {self.extraMass}; size = {self.size} ; canEat = {self.canEat}"
 
     def draw(self, surface):
         pygame.draw.rect(surface,self.color,self.rect,self.rect.width,2)
@@ -79,11 +86,12 @@ class Cell:
             self.massGain(self.massRate)
             self.locationCheck()
             self.deathCheck()
+            self.ageCheck()
             return self.update()
         
     def mutate(self):
         select = random.random()
-        range_arr = rangeDec(8)
+        range_arr = rangeDec(10)
         iter = 0
         for ran in range_arr:
             if select < ran:
@@ -138,6 +146,16 @@ class Cell:
                 else:
                     self.massRate += self.mutationAmount / 10
                 self.massRate = clamp(self.massRate, 0.0001, 0.01)
+            case 8:
+                if chance(0.5):
+                    self.size -= self.mutationAmount
+                else:
+                    self.size += self.mutationAmount
+                self.size = clamp(self.massRate, 1, 10)
+            case 9:
+                if chance(0.1):
+                    print("eat")
+                    self.canEat = not self.canEat 
             case _:
                 pass
         R = clamp(self.color[0] + random.randint(-20, 20),0, 255)
@@ -161,12 +179,12 @@ class Cell:
             newCell = copy.copy(self)
             self.energy /= 2
             newCell.energy /= 2
-            newCell.rect = pygame.Rect(self.rect.x,self.rect.y,pixel_size, pixel_size)
+            newCell.rect = pygame.Rect(self.rect.x,self.rect.y,self.size, self.size)
             if chance(newCell.mutationRate):
                 newCell.mutate()
             self.cells.append(newCell)
             newCell.draw(self.surface)
-            newCell.move(ranDirection(), pixel_size)
+            newCell.move(ranDirection(), self.size)
 
     def move(self, vector2, amount):
         old_rect = self.rect.copy()
@@ -188,6 +206,16 @@ class Cell:
             self.energyGain(food.energy * self.motabolism)
             self.massGain((food.mass / 2) * self.motabolism)
             del food
+        cellList = self.cells.copy()
+        if self in cellList:
+            cellList.remove(self)
+        cellInd = self.rect.collidelist(cellList)
+        if self.canEat and cellInd != -1:
+            cell = self.cells[cellInd]
+            cell.alive = False
+            cell.unDraw(cell.rect)
+            self.energyGain(cell.energy * self.motabolism)
+            self.massGain((cell.extraMass / 2) * self.motabolism)
 
     def locationCheck(self):
         cellList = self.cells.copy()
@@ -195,20 +223,27 @@ class Cell:
             cellList.remove(self)
         cellInd = self.rect.collidelist(cellList)
         if cellInd != -1:
-            self.move(ranDirection(),pixel_size/2)
+            cell = self.cells[cellInd]
+            self.move(ranDirection(),cell.size/2)
 
     def click_check(self, position):
         if self.rect.collidepoint(position):
             print(self)
-        
-    
+
+    def ageCheck(self):
+        if chance(self.mutationRate/1000):
+            self.death()
+
     def deathCheck(self):
         if self.energy <= 0:
-            food = Food(self.rect.x, self.rect.y, self.maxEnergy * 0.1, self.extraMass, self.surface)
-            food.draw_without(self.surface)
-            self.dirty.append(food.rect)
-            self.foods.append(food)
-            self.alive = False
+            self.death()
+            
+    def death(self):
+        food = Food(self.rect.x, self.rect.y, self.maxEnergy * 0.1, self.extraMass, self.size, self.surface)
+        food.draw(self.surface)
+        self.dirty.append(food.rect)
+        self.foods.append(food)
+        self.alive = False
 
 
 
